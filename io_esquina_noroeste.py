@@ -4,9 +4,6 @@ from tkinter import ttk, messagebox
 from typing import List, Tuple, Optional, Dict
 import copy
 
-# -----------------------------
-# Core logic
-# -----------------------------
 class TransportResult:
     def __init__(
         self,
@@ -49,12 +46,12 @@ def _balance_problem(
         supply_bal = supply[:] + [faltante]
         return c, supply_bal, demand[:], False, 'row'
 
-def northwest_corner(
+def northwest_corner( #en este apartado empezamos con la función de la esquina noroeste
     costs: List[List[float]],
     supply: List[float],
     demand: List[float],
     dummy_cost: float = 0.0,
-    tie_priority: str = "col"  # 'col' or 'row' in ties
+    tie_priority: str = "col"  
 ) -> TransportResult:
     c, s, d, balanced, dummy_added = _balance_problem(costs, supply, demand, dummy_cost)
 
@@ -102,9 +99,7 @@ def northwest_corner(
 
     return TransportResult(alloc, total_cost, steps, balanced, dummy_added, c)
 
-# -----------------------------
-# GUI
-# -----------------------------
+#En este apartado comenzamos con la interfaz lo cual usamos la libreria Tkinter
 class ScrollableFrame(ttk.Frame):
     def __init__(self, container, *args, **kwargs):
         super().__init__(container, *args, **kwargs)
@@ -153,32 +148,31 @@ class App(tk.Tk):
         ttk.Radiobutton(top, text="Columna", variable=self.tie_var, value="col").pack(side="left")
         ttk.Radiobutton(top, text="Fila", variable=self.tie_var, value="row").pack(side="left")
 
-        # Right-aligned buttons
+      
         ttk.Button(top, text="Limpiar", command=self.limpiar_campos).pack(side="right", padx=4)
         ttk.Button(top, text="Calcular", command=self.calcular).pack(side="right")
 
-        # Middle area with scrollable grid
+      
         mid = ttk.Frame(self)
         mid.pack(fill="both", expand=True, padx=10, pady=6)
 
-        # Left: entry grid
+        
         left = ttk.LabelFrame(mid, text="Entradas")
         left.pack(side="left", fill="both", expand=True)
 
         self.scroll = ScrollableFrame(left)
         self.scroll.pack(fill="both", expand=True, padx=6, pady=6)
 
-        # Right: results
+     
         right = ttk.LabelFrame(mid, text="Resultados")
         right.pack(side="right", fill="both", expand=True, padx=(8,0))
 
         self.text_res = tk.Text(right, wrap="word", height=30)
         self.text_res.pack(fill="both", expand=True, padx=6, pady=6)
 
-        # Data holders
-        self.cost_entries = []  # 2D
-        self.supply_entries = []  # 1D
-        self.demand_entries = []  # 1D
+        self.cost_entries = []  
+        self.supply_entries = []  
+        self.demand_entries = [] 
 
     def clear_grid(self):
         for widget in self.scroll.scrollable_frame.winfo_children():
@@ -199,12 +193,12 @@ class App(tk.Tk):
 
         self.clear_grid()
 
-        # Headers
+      
         ttk.Label(self.scroll.scrollable_frame, text="Costos (m x n)").grid(row=0, column=0, columnspan=n, pady=(0,4))
         for j in range(n):
             ttk.Label(self.scroll.scrollable_frame, text=f"D{j+1}", anchor="center").grid(row=1, column=j, padx=2)
 
-        # Cost matrix
+      
         self.cost_entries = []
         for i in range(m):
             row_entries = []
@@ -214,7 +208,7 @@ class App(tk.Tk):
                 row_entries.append(e)
             self.cost_entries.append(row_entries)
 
-        # Supply column
+        
         ttk.Label(self.scroll.scrollable_frame, text="Oferta").grid(row=1, column=n+1, padx=(8,2))
         self.supply_entries = []
         for i in range(m):
@@ -222,7 +216,7 @@ class App(tk.Tk):
             e.grid(row=i+2, column=n+1, padx=(8,2), pady=1)
             self.supply_entries.append(e)
 
-        # Demand row
+        
         ttk.Label(self.scroll.scrollable_frame, text="Demanda").grid(row=m+2, column=0, columnspan=n, pady=(8,0))
         self.demand_entries = []
         for j in range(n):
@@ -230,11 +224,11 @@ class App(tk.Tk):
             e.grid(row=m+3, column=j, pady=1)
             self.demand_entries.append(e)
 
-        # Hint
+       
         ttk.Label(self.scroll.scrollable_frame, text="Tip: doble clic en 'Ejemplo rápido' para rellenar valores de prueba.").grid(row=m+4, column=0, columnspan=n+2, pady=(6,2))
 
     def cargar_ejemplo(self):
-        # Pre-carga un ejemplo pequeño 3x4
+       
         self.entry_m.delete(0, tk.END); self.entry_m.insert(0, "3")
         self.entry_n.delete(0, tk.END); self.entry_n.insert(0, "4")
         self.generar_tabla()
@@ -272,7 +266,7 @@ class App(tk.Tk):
         supply = [float(e.get()) for e in self.supply_entries]
         demand = [float(e.get()) for e in self.demand_entries]
 
-        # Validaciones simples
+        
         if any(x < 0 for x in sum(costs, [])):
             raise ValueError("Los costos no pueden ser negativos.")
         if any(x < 0 for x in supply) or any(x < 0 for x in demand):
@@ -288,11 +282,11 @@ class App(tk.Tk):
             tie = self.tie_var.get()
             res = northwest_corner(costs, supply, demand, dummy_cost=0.0, tie_priority=tie)
 
-            # Mostrar resultados (más limpio y natural)
+           
             self.text_res.delete("1.0", tk.END)
             self.text_res.insert(tk.END, f"Costo total: {res.total_cost:.2f}\n")
 
-            # Mensaje amigable en lugar de '¿Balanceado? True/False'
+           
             if res.balanced:
                 self.text_res.insert(tk.END, "El problema está balanceado (oferta = demanda).\n")
             else:
@@ -301,7 +295,7 @@ class App(tk.Tk):
             self.text_res.insert(tk.END, "\nPasos:\n")
             for k, step in enumerate(res.steps, 1):
                 i0, j0 = step['pos']
-                i1, j1 = i0 + 1, j0 + 1  # 1-based para lectura humana
+                i1, j1 = i0 + 1, j0 + 1  
                 asignado = step['asignado']
                 of_rem = step['oferta_restante_fila_i']
                 dem_rem = step['demanda_restante_col_j']
@@ -318,7 +312,7 @@ class App(tk.Tk):
             messagebox.showerror("Error", str(e))
 
     def limpiar_campos(self):
-        # Borra todos los valores de la matriz de costos, oferta, demanda y el panel de resultados
+        
         for row in self.cost_entries:
             for e in row:
                 e.delete(0, tk.END)
